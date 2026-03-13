@@ -1,0 +1,39 @@
+# استخدام قواعد Very Good Analysis المتقدمة
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  # استبعاد الملفات المُولدة تلقائياً من الفحص
+  exclude:
+    - "**/*.g.dart"        # ملفات مولدة من json_serializable
+    - "**/*.freezed.dart"  # ملفات مولدة من freezed
+    - "**/generated/**"    # مجلد الملفات المولدة
+    - lib2/generated/**     # ملفات الترجمة المولدة
+
+  # معالجة الأخطاء الشائعة
+  errors:
+    invalid_annotation_target: ignore  # تجاهل أخطاء التعليقات التوضيحية
+    todo: ignore                       # تجاهل تعليقات TODO
+    fixme: ignore                      # تجاهل تعليقات FIXME
+
+# قواعد إضافية للكود
+linter:
+  rules:
+    # أفضل الممارسات
+    prefer_single_quotes: true              # استخدام علامة اقتباس واحدة
+    prefer_final_fields: true               # استخدام final للحقول
+    prefer_final_locals: true               # استخدام final للمتغيرات المحلية
+
+    # تنظيم الكود
+    sort_constructors_first: true           # ترتيب المنشئات أولاً
+
+    # الأمان
+    avoid_print: true                       # تجنب استخدام print
+    avoid_web_libraries_in_flutter: true    # تجنب مكتبات الويب في Flutter
+
+    # الوضوح
+    use_key_in_widget_constructors: true    # استخدام key في widgets
+    prefer_const_constructors: true         # استخدام const constructors
+
+    # تجنب الأخطاء الشائعة
+    cancel_subscriptions: true              # إلغاء الاشتراكات
+    close_sinks: true                       # إغلاق streams

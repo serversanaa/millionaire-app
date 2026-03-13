@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--           معلومات التطبيق الأساسية        -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>مركز المليونير</string>
+
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>CFBundleName</key>
+    <string>millionaire_salon</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>$(FLUTTER_BUILD_NAME)</string>
+
+    <key>CFBundleSignature</key>
+    <string>????</string>
+
+    <key>CFBundleVersion</key>
+    <string>$(FLUTTER_BUILD_NUMBER)</string>
+
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--   📷 الكاميرا ← CAMERA                    -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>NSCameraUsageDescription</key>
+    <string>نحتاج للوصول إلى الكاميرا لالتقاط صورة الإيصال وصورة البروفايل</string>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--   🖼 مكتبة الصور ← READ_MEDIA_IMAGES      -->
+    <!--       READ_EXTERNAL_STORAGE               -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>نحتاج للوصول إلى مكتبة الصور لاختيار صورة الإيصال أو صورة البروفايل</string>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--   💾 حفظ الصور ← WRITE_EXTERNAL_STORAGE   -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>نحتاج للوصول إلى مكتبة الصور لحفظ الصور من التطبيق</string>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--   🔐 بصمة الوجه ← USE_BIOMETRIC           -->
+    <!--                   USE_FINGERPRINT         -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>نستخدم التعرف على الوجه للدخول السريع وحماية حسابك</string>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--   🔔 الإشعارات ← POST_NOTIFICATIONS       -->
+    <!--    SCHEDULE_EXACT_ALARM / WAKE_LOCK        -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--   🎙 الميكروفون (احتياطي)                 -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>نحتاج للوصول إلى الميكروفون</string>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--        إعدادات الواجهة والأداء            -->
+    <!-- ══════════════════════════════════════════ -->
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+
+    <key>UIMainStoryboardFile</key>
+    <string>Main</string>
+
+    <!-- اتجاهات الشاشة - iPhone -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- اتجاهات الشاشة - iPad -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- تحسين معدل الإطارات على iPhone -->
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
+
+    <!-- دعم الإدخال غير المباشر (ماوس/لوحة مفاتيح) -->
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+
+</dict>
+</plist>

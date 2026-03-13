@@ -1,0 +1,45 @@
+lib/
+ ├── core/                             # إعدادات عامة، ثوابت، and utils
+ ├── features/
+ │    ├── services/
+ │    │    ├── data/
+ │    │    │     └── repositories/
+ │    │    │            └── services_repository.dart
+ │    │    ├── domain/
+ │    │    │     └── models/
+ │    │    │            └── service_model.dart
+ │    │    ├── presentation/
+ │    │    │    ├── providers/
+ │    │    │    │     └── services_provider.dart
+ │    │    │    └── pages/
+ │    │    │          └── services_page.dart
+ │    ├── offers/
+ │    │    ├── data/
+ │    │    │     └── repositories/
+ │    │    │            └── offer_repository.dart
+ │    │    ├── domain/
+ │    │    │     └── models/
+ │    │    │            └── offer_model.dart
+ │    │    ├── presentation/
+ │    │    │    ├── providers/
+ │    │    │    │     └── offers_provider.dart
+ │    │    │    └── pages/
+ │    │    │          └── offers_page.dart
+ │    ├── profile/
+ │    │    ├── data/
+ │    │    │     └── repositories/
+ │    │    │            └── user_repository.dart
+ │    │    ├── domain/
+ │    │    │     └── models/
+ │    │    │            └── user_model.dart
+ │    │    ├── presentation/
+ │    │    │    ├── providers/
+ │    │    │    │     └── user_provider.dart
+ │    │    │    └── pages/
+ │    │    │          └── profile_page.dart
+ │    ├── home/
+ │    │     └── presentation/
+ │    │            └── pages/
+ │    │                 └── home_page.dart
+ ├── main.dart
+ ├── app_router.dart

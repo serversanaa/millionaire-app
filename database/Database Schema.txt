@@ -1,0 +1,1969 @@
+-- جدول المستخدمين (للرجال فقط)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    password_hash VARCHAR(255),
+    date_of_birth DATE,
+    gender VARCHAR(10) DEFAULT 'male' CHECK (gender = 'male'),  -- الجنس ذكر فقط
+    profile_image_url TEXT,
+    address TEXT,
+    loyalty_points INTEGER DEFAULT 0,
+    vip_status BOOLEAN DEFAULT FALSE,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول الموظفين
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    employee_code VARCHAR(20) UNIQUE NOT NULL,
+    specialties TEXT[],
+    profile_image_url TEXT,
+    hire_date DATE NOT NULL,
+    salary DECIMAL(10,2),
+    commission_rate DECIMAL(5,2) DEFAULT 0.00,
+    working_hours_start TIME DEFAULT '09:00:00',
+    working_hours_end TIME DEFAULT '22:00:00',
+    working_days INTEGER[] DEFAULT '{1,2,3,4,5,6,7}',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول الخدمات
+CREATE TABLE public.services (
+  id serial PRIMARY KEY,
+  service_name varchar(100) NOT NULL,
+  service_name_ar varchar(100) NOT NULL,
+  description text NULL,
+  description_ar text NULL,
+  category_id integer NOT NULL,
+  price numeric(10,2) NOT NULL,
+  duration_minutes integer NOT NULL,
+  loyalty_points integer DEFAULT 1,
+  image_url text NULL,
+  before_after_images text[] NULL,
+  is_active boolean DEFAULT true,
+  requires_booking boolean DEFAULT true,
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_service_category FOREIGN KEY (category_id) REFERENCES public.service_categories (id)
+  ON DELETE RESTRICT ON UPDATE CASCADE
+);
+-- جدول المواعيد
+CREATE TABLE appointments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    employee_id INTEGER REFERENCES employees(id),
+    appointment_date DATE NOT NULL,
+    appointment_time TIME NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    total_price DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show')),
+    payment_status VARCHAR(20) DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'paid', 'partial', 'refunded')),
+    payment_method VARCHAR(20) CHECK (payment_method IN ('cash', 'card', 'wallet', 'points')),
+    notes TEXT,
+    client_name VARCHAR(100) NOT NULL,
+    client_phone VARCHAR(20) NOT NULL,
+    loyalty_points_earned INTEGER DEFAULT 0,
+    loyalty_points_used INTEGER DEFAULT 0,
+    discount_amount DECIMAL(10,2) DEFAULT 0.00,
+    created_by_employee INTEGER REFERENCES employees(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- جدول تفاصيل خدمات المواعيد
+CREATE TABLE appointment_services (
+    id SERIAL PRIMARY KEY,
+    appointment_id INTEGER REFERENCES appointments(id) ON DELETE CASCADE,
+    service_id INTEGER REFERENCES services(id),
+    service_price DECIMAL(10,2) NOT NULL,
+    service_duration INTEGER NOT NULL,
+    employee_id INTEGER REFERENCES employees(id),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول العروض والخصومات
+CREATE TABLE offers (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    title_ar VARCHAR(100) NOT NULL,
+    description TEXT,
+    description_ar TEXT,
+    discount_type VARCHAR(20) CHECK (discount_type IN ('percentage', 'fixed_amount', 'points_multiplier')),
+    discount_value DECIMAL(10,2) NOT NULL,
+    min_purchase_amount DECIMAL(10,2) DEFAULT 0.00,
+    max_discount_amount DECIMAL(10,2),
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    usage_limit INTEGER,
+    usage_limit_per_user INTEGER DEFAULT 1,
+    current_usage INTEGER DEFAULT 0,
+    applicable_services INTEGER[],
+    applicable_user_types VARCHAR(20)[] DEFAULT '{"all"}',
+    promo_code VARCHAR(20) UNIQUE,
+    image_url TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول استخدام العروض
+CREATE TABLE offer_usage (
+    id SERIAL PRIMARY KEY,
+    offer_id INTEGER REFERENCES offers(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    appointment_id INTEGER REFERENCES appointments(id),
+    usage_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    discount_applied DECIMAL(10,2) NOT NULL
+);
+
+-- جدول نقاط الولاء
+CREATE TABLE loyalty_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    appointment_id INTEGER REFERENCES appointments(id),
+    transaction_type VARCHAR(20) CHECK (transaction_type IN ('earned', 'redeemed', 'expired', 'bonus')),
+    points_amount INTEGER NOT NULL,
+    description VARCHAR(200),
+    expiry_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول التقييمات
+-- جدول التقييمات (للخدمات والموظفين)
+CREATE TABLE reviews (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    appointment_id BIGINT REFERENCES appointments(id) ON DELETE CASCADE,
+    service_id BIGINT REFERENCES services(id) ON DELETE SET NULL,
+    employee_id INTEGER REFERENCES employees(id) ON DELETE SET NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    is_anonymous BOOLEAN DEFAULT FALSE,
+    is_approved BOOLEAN DEFAULT TRUE,
+    helpful_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- جدول تقييمات الخدمات (ملخص)
+CREATE TABLE service_ratings (
+    service_id BIGINT PRIMARY KEY REFERENCES services(id) ON DELETE CASCADE,
+    total_reviews INTEGER DEFAULT 0,
+    average_rating DECIMAL(3,2) DEFAULT 0.00,
+    rating_5_star INTEGER DEFAULT 0,
+    rating_4_star INTEGER DEFAULT 0,
+    rating_3_star INTEGER DEFAULT 0,
+    rating_2_star INTEGER DEFAULT 0,
+    rating_1_star INTEGER DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- جدول تقييمات الموظفين (ملخص)
+CREATE TABLE employee_ratings (
+    employee_id INTEGER PRIMARY KEY REFERENCES employees(id) ON DELETE CASCADE,
+    total_reviews INTEGER DEFAULT 0,
+    average_rating DECIMAL(3,2) DEFAULT 0.00,
+    rating_5_star INTEGER DEFAULT 0,
+    rating_4_star INTEGER DEFAULT 0,
+    rating_3_star INTEGER DEFAULT 0,
+    rating_2_star INTEGER DEFAULT 0,
+    rating_1_star INTEGER DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- الفهارس
+CREATE INDEX idx_reviews_user_id ON reviews(user_id);
+CREATE INDEX idx_reviews_appointment_id ON reviews(appointment_id);
+CREATE INDEX idx_reviews_service_id ON reviews(service_id);
+CREATE INDEX idx_reviews_employee_id ON reviews(employee_id);
+CREATE INDEX idx_reviews_rating ON reviews(rating);
+CREATE INDEX idx_reviews_created_at ON reviews(created_at DESC);
+
+-- RLS Policies
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+-- الجميع يمكنهم قراءة التقييمات المعتمدة
+CREATE POLICY "Anyone can view approved reviews"
+ON reviews FOR SELECT
+USING (is_approved = true);
+
+-- المستخدم يمكنه رؤية تقييماته الخاصة
+CREATE POLICY "Users can view their own reviews"
+ON reviews FOR SELECT
+USING (
+    user_id = (SELECT id FROM users WHERE auth_uid = auth.uid()::text)
+);
+
+-- المستخدم يمكنه إنشاء تقييم
+CREATE POLICY "Users can create reviews"
+ON reviews FOR INSERT
+WITH CHECK (
+    user_id = (SELECT id FROM users WHERE auth_uid = auth.uid()::text)
+);
+
+-- المستخدم يمكنه تحديث تقييماته
+CREATE POLICY "Users can update their own reviews"
+ON reviews FOR UPDATE
+USING (
+    user_id = (SELECT id FROM users WHERE auth_uid = auth.uid()::text)
+);
+
+-- المستخدم يمكنه حذف تقييماته
+CREATE POLICY "Users can delete their own reviews"
+ON reviews FOR DELETE
+USING (
+    user_id = (SELECT id FROM users WHERE auth_uid = auth.uid()::text)
+);
+
+-- Trigger لتحديث updated_at
+CREATE OR REPLACE FUNCTION update_reviews_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER reviews_updated_at_trigger
+BEFORE UPDATE ON reviews
+FOR EACH ROW
+EXECUTE FUNCTION update_reviews_updated_at();
+
+-- Function لتحديث متوسط تقييم الخدمة
+CREATE OR REPLACE FUNCTION update_service_rating()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_service_id BIGINT;
+    v_total INTEGER;
+    v_average DECIMAL(3,2);
+    v_rating_5 INTEGER;
+    v_rating_4 INTEGER;
+    v_rating_3 INTEGER;
+    v_rating_2 INTEGER;
+    v_rating_1 INTEGER;
+BEGIN
+    -- تحديد service_id
+    IF TG_OP = 'DELETE' THEN
+        v_service_id := OLD.service_id;
+    ELSE
+        v_service_id := NEW.service_id;
+    END IF;
+
+    -- إذا لم يكن هناك service_id، نخرج
+    IF v_service_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    -- حساب الإحصائيات
+    SELECT 
+        COUNT(*),
+        COALESCE(AVG(rating), 0),
+        COUNT(*) FILTER (WHERE rating = 5),
+        COUNT(*) FILTER (WHERE rating = 4),
+        COUNT(*) FILTER (WHERE rating = 3),
+        COUNT(*) FILTER (WHERE rating = 2),
+        COUNT(*) FILTER (WHERE rating = 1)
+    INTO 
+        v_total,
+        v_average,
+        v_rating_5,
+        v_rating_4,
+        v_rating_3,
+        v_rating_2,
+        v_rating_1
+    FROM reviews
+    WHERE service_id = v_service_id AND is_approved = true;
+
+    -- تحديث أو إدراج في service_ratings
+    INSERT INTO service_ratings (
+        service_id,
+        total_reviews,
+        average_rating,
+        rating_5_star,
+        rating_4_star,
+        rating_3_star,
+        rating_2_star,
+        rating_1_star,
+        updated_at
+    ) VALUES (
+        v_service_id,
+        v_total,
+        v_average,
+        v_rating_5,
+        v_rating_4,
+        v_rating_3,
+        v_rating_2,
+        v_rating_1,
+        NOW()
+    )
+    ON CONFLICT (service_id)
+    DO UPDATE SET
+        total_reviews = v_total,
+        average_rating = v_average,
+        rating_5_star = v_rating_5,
+        rating_4_star = v_rating_4,
+        rating_3_star = v_rating_3,
+        rating_2_star = v_rating_2,
+        rating_1_star = v_rating_1,
+        updated_at = NOW();
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger لتحديث تقييم الخدمة
+CREATE TRIGGER update_service_rating_trigger
+AFTER INSERT OR UPDATE OR DELETE ON reviews
+FOR EACH ROW
+EXECUTE FUNCTION update_service_rating();
+
+
+-- دالة زيادة عدد "مفيد" للتقييم
+CREATE OR REPLACE FUNCTION increment_helpful_count(review_id BIGINT)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE reviews
+    SET helpful_count = helpful_count + 1
+    WHERE id = review_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+
+-- Function لتحديث متوسط تقييم الموظف (مشابه للخدمة)
+CREATE OR REPLACE FUNCTION update_employee_rating()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_employee_id INTEGER;
+    v_total INTEGER;
+    v_average DECIMAL(3,2);
+    v_rating_5 INTEGER;
+    v_rating_4 INTEGER;
+    v_rating_3 INTEGER;
+    v_rating_2 INTEGER;
+    v_rating_1 INTEGER;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        v_employee_id := OLD.employee_id;
+    ELSE
+        v_employee_id := NEW.employee_id;
+    END IF;
+
+    IF v_employee_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT 
+        COUNT(*),
+        COALESCE(AVG(rating), 0),
+        COUNT(*) FILTER (WHERE rating = 5),
+        COUNT(*) FILTER (WHERE rating = 4),
+        COUNT(*) FILTER (WHERE rating = 3),
+        COUNT(*) FILTER (WHERE rating = 2),
+        COUNT(*) FILTER (WHERE rating = 1)
+    INTO 
+        v_total,
+        v_average,
+        v_rating_5,
+        v_rating_4,
+        v_rating_3,
+        v_rating_2,
+        v_rating_1
+    FROM reviews
+    WHERE employee_id = v_employee_id AND is_approved = true;
+
+    INSERT INTO employee_ratings (
+        employee_id,
+        total_reviews,
+        average_rating,
+        rating_5_star,
+        rating_4_star,
+        rating_3_star,
+        rating_2_star,
+        rating_1_star,
+        updated_at
+    ) VALUES (
+        v_employee_id,
+        v_total,
+        v_average,
+        v_rating_5,
+        v_rating_4,
+        v_rating_3,
+        v_rating_2,
+        v_rating_1,
+        NOW()
+    )
+    ON CONFLICT (employee_id)
+    DO UPDATE SET
+        total_reviews = v_total,
+        average_rating = v_average,
+        rating_5_star = v_rating_5,
+        rating_4_star = v_rating_4,
+        rating_3_star = v_rating_3,
+        rating_2_star = v_rating_2,
+        rating_1_star = v_rating_1,
+        updated_at = NOW();
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger لتحديث تقييم الموظف
+CREATE TRIGGER update_employee_rating_trigger
+AFTER INSERT OR UPDATE OR DELETE ON reviews
+FOR EACH ROW
+EXECUTE FUNCTION update_employee_rating();
+
+
+-- جدول الإشعارات
+CREATE TABLE notifications (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE, -- ✅ INTEGER بدلاً من BIGINT (لأن id في users هو SERIAL)
+    appointment_id BIGINT REFERENCES appointments(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'booking_confirmed', 'reminder', 'cancelled', 'completed', 'offer'
+    is_read BOOLEAN DEFAULT FALSE,
+    data JSONB, -- بيانات إضافية
+    scheduled_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- الفهارس
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX idx_notifications_appointment_id ON notifications(appointment_id);
+CREATE INDEX idx_notifications_type ON notifications(type);
+CREATE INDEX idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);
+
+-- RLS Policies
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- المستخدم يرى إشعاراته فقط
+CREATE POLICY "Users can view their own notifications"
+ON notifications FOR SELECT
+USING (
+    user_id = (
+        SELECT id FROM users WHERE auth_uid = auth.uid()::text -- ✅ استخدام auth_uid
+    )
+);
+
+-- المستخدم يحدّث إشعاراته فقط
+CREATE POLICY "Users can update their own notifications"
+ON notifications FOR UPDATE
+USING (
+    user_id = (
+        SELECT id FROM users WHERE auth_uid = auth.uid()::text -- ✅ استخدام auth_uid
+    )
+);
+
+-- السماح لـ Service Role بإنشاء إشعارات
+CREATE POLICY "Service role can insert notifications"
+ON notifications FOR INSERT
+WITH CHECK (true);
+
+-- السماح لـ Service Role بحذف إشعارات
+CREATE POLICY "Users can delete their own notifications"
+ON notifications FOR DELETE
+USING (
+    user_id = (
+        SELECT id FROM users WHERE auth_uid = auth.uid()::text
+    )
+);
+
+-- Trigger للـ updated_at
+CREATE OR REPLACE FUNCTION update_notifications_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER notifications_updated_at_trigger
+BEFORE UPDATE ON notifications
+FOR EACH ROW
+EXECUTE FUNCTION update_notifications_updated_at();
+
+
+-- جدول جداول الموظفين
+CREATE TABLE employee_schedules (
+    id SERIAL PRIMARY KEY,
+    employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+    schedule_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    break_start TIME,
+    break_end TIME,
+    is_available BOOLEAN DEFAULT TRUE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(employee_id, schedule_date, start_time)
+);
+
+-- جدول الوسائط (الصور والفيديو)
+CREATE TABLE media (
+    id SERIAL PRIMARY KEY,
+    related_type VARCHAR(20) CHECK (related_type IN ('service', 'user', 'employee', 'appointment', 'offer')),
+    related_id INTEGER NOT NULL,
+    media_type VARCHAR(20) CHECK (media_type IN ('image', 'video')),
+    file_url TEXT NOT NULL,
+    thumbnail_url TEXT,
+    file_name VARCHAR(255),
+    file_size INTEGER,
+    mime_type VARCHAR(50),
+    caption VARCHAR(255),
+    display_order INTEGER DEFAULT 0,
+    is_public BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول تصنيفات الخدمات
+CREATE TABLE public.service_categories (
+  id serial PRIMARY KEY,
+  category_name varchar(50) NOT NULL,
+  category_name_ar varchar(50) NOT NULL,
+  description text NULL,
+  created_at timestamp default CURRENT_TIMESTAMP,
+  updated_at timestamp default CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.services
+ADD COLUMN category_id int NULL,
+ADD CONSTRAINT fk_category FOREIGN KEY(category_id) REFERENCES public.service_categories(id);
+
+-- بعد ذلك يمكن إزالة عمود category النصي ليكون الربط عبر المفتاح الأجنبي فقط
+ALTER TABLE public.services DROP COLUMN category;
+
+
+-- إضافة Foreign Key من appointment_services إلى services
+ALTER TABLE appointment_services
+ADD CONSTRAINT fk_appointment_service_service
+FOREIGN KEY (service_id) REFERENCES services(id)
+ON DELETE CASCADE ON UPDATE CASCADE;
+
+
+-- جدول المفضلات
+CREATE TABLE favorites (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    service_id BIGINT NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, service_id) -- منع التكرار
+);
+
+-- الفهارس للأداء
+CREATE INDEX idx_favorites_user_id ON favorites(user_id);
+CREATE INDEX idx_favorites_service_id ON favorites(service_id);
+CREATE INDEX idx_favorites_created_at ON favorites(created_at DESC);
+
+-- RLS Policies
+ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
+
+-- المستخدم يمكنه رؤية مفضلاته فقط
+CREATE POLICY "Users can view their own favorites"
+ON favorites FOR SELECT
+USING (user_id = (SELECT id FROM users WHERE auth_uid = auth.uid()::text));
+
+-- المستخدم يمكنه إضافة للمفضلة
+CREATE POLICY "Users can add to favorites"
+ON favorites FOR INSERT
+WITH CHECK (user_id = (SELECT id FROM users WHERE auth_uid = auth.uid()::text));
+
+-- المستخدم يمكنه حذف من مفضلاته
+CREATE POLICY "Users can delete their favorites"
+ON favorites FOR DELETE
+USING (user_id = (SELECT id FROM users WHERE auth_uid = auth.uid()::text));
+
+-- Function لعدد المفضلات
+CREATE OR REPLACE FUNCTION get_user_favorites_count(p_user_id INTEGER)
+RETURNS INTEGER AS $$
+BEGIN
+    RETURN (SELECT COUNT(*) FROM favorites WHERE user_id = p_user_id);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function للتحقق من وجود خدمة في المفضلة
+CREATE OR REPLACE FUNCTION is_service_favorite(p_user_id INTEGER, p_service_id BIGINT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS(
+        SELECT 1 FROM favorites 
+        WHERE user_id = p_user_id AND service_id = p_service_id
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- جدول الكوبونات
+CREATE TABLE coupons (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    discount_type VARCHAR(20) NOT NULL, -- 'percentage' أو 'fixed'
+    discount_value DECIMAL(10, 2) NOT NULL,
+    min_amount DECIMAL(10, 2) DEFAULT 0,
+    max_discount DECIMAL(10, 2) NULL, -- الحد الأقصى للخصم (للنسبة المئوية)
+    usage_limit INTEGER NULL, -- عدد مرات الاستخدام الكلي
+    usage_per_user INTEGER DEFAULT 1, -- عدد مرات الاستخدام لكل مستخدم
+    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_vip_only BOOLEAN DEFAULT FALSE, -- للعملاء VIP فقط
+    description TEXT,
+    description_ar TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- جدول استخدام الكوبونات
+CREATE TABLE coupon_usages (
+    id BIGSERIAL PRIMARY KEY,
+    coupon_id BIGINT NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    appointment_id BIGINT REFERENCES appointments(id) ON DELETE SET NULL,
+    discount_amount DECIMAL(10, 2) NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- الفهارس
+CREATE INDEX idx_coupons_code ON coupons(code);
+CREATE INDEX idx_coupons_active ON coupons(is_active);
+CREATE INDEX idx_coupons_dates ON coupons(start_date, end_date);
+CREATE INDEX idx_coupon_usages_coupon_id ON coupon_usages(coupon_id);
+CREATE INDEX idx_coupon_usages_user_id ON coupon_usages(user_id);
+
+-- ════════════════════════════════════════════════════════════════
+-- 2️⃣ سياسات جدول coupons (بسيطة وشاملة)
+-- ════════════════════════════════════════════════════════════════
+
+-- قراءة الكوبونات النشطة (للجميع)
+CREATE POLICY "Public can view active coupons"
+ON coupons FOR SELECT
+USING (is_active = true);
+
+-- إنشاء كوبونات جديدة (للجميع - لأن التحقق يتم من التطبيق)
+CREATE POLICY "Allow insert coupons"
+ON coupons FOR INSERT
+WITH CHECK (true);
+
+-- تحديث الكوبونات (للجميع)
+CREATE POLICY "Allow update coupons"
+ON coupons FOR UPDATE
+USING (true)
+WITH CHECK (true);
+
+-- حذف الكوبونات (اختياري - للإدارة)
+-- CREATE POLICY "Allow delete coupons"
+-- ON coupons FOR DELETE
+-- USING (true);
+
+-- ════════════════════════════════════════════════════════════════
+-- 3️⃣ سياسات جدول coupon_usages
+-- ════════════════════════════════════════════════════════════════
+
+-- قراءة سجل الاستخدام (للجميع)
+CREATE POLICY "Public can view coupon usage"
+ON coupon_usages FOR SELECT
+USING (true);
+
+-- إضافة سجل استخدام جديد (للجميع)
+CREATE POLICY "Allow insert coupon usage"
+ON coupon_usages FOR INSERT
+WITH CHECK (true);
+
+-- تحديث سجل الاستخدام (للجميع)
+CREATE POLICY "Allow update coupon usage"
+ON coupon_usages FOR UPDATE
+USING (true)
+WITH CHECK (true);
+
+-- ════════════════════════════════════════════════════════════════
+-- 4️⃣ التحقق من السياسات
+-- ════════════════════════════════════════════════════════════════
+
+SELECT 
+  tablename,
+  policyname,
+  cmd AS operation,
+  roles,
+  permissive
+FROM pg_policies
+WHERE tablename IN ('coupons', 'coupon_usages')
+ORDER BY tablename, cmd;
+
+-- ════════════════════════════════════════════════════════════════
+-- 5️⃣ التأكد من تفعيل RLS
+-- ════════════════════════════════════════════════════════════════
+
+SELECT 
+  tablename,
+  CASE 
+    WHEN rowsecurity THEN 'RLS Enabled ✅'
+    ELSE 'RLS Disabled ❌'
+  END as status
+FROM pg_tables 
+WHERE tablename IN ('coupons', 'coupon_usages');
+
+
+-- Function للتحقق من صلاحية الكوبون
+CREATE OR REPLACE FUNCTION validate_coupon(
+    p_code VARCHAR(50),
+    p_user_id INTEGER,
+    p_amount DECIMAL(10, 2),
+    p_is_vip BOOLEAN DEFAULT FALSE
+)
+RETURNS JSON AS $$
+DECLARE
+    v_coupon RECORD;
+    v_usage_count INTEGER;
+    v_user_usage_count INTEGER;
+    v_discount DECIMAL(10, 2);
+    v_result JSON;
+BEGIN
+    -- جلب الكوبون
+    SELECT * INTO v_coupon
+    FROM coupons
+    WHERE code = p_code
+    AND is_active = true
+    AND NOW() BETWEEN start_date AND end_date;
+
+    -- التحقق من وجود الكوبون
+    IF v_coupon.id IS NULL THEN
+        RETURN json_build_object(
+            'valid', false,
+            'message', 'كود الكوبون غير صحيح أو منتهي الصلاحية'
+        );
+    END IF;
+
+    -- التحقق من VIP
+    IF v_coupon.is_vip_only = true AND p_is_vip = false THEN
+        RETURN json_build_object(
+            'valid', false,
+            'message', 'هذا الكوبون متاح فقط لعملاء VIP'
+        );
+    END IF;
+
+    -- التحقق من الحد الأدنى للمبلغ
+    IF p_amount < v_coupon.min_amount THEN
+        RETURN json_build_object(
+            'valid', false,
+            'message', 'الحد الأدنى للاستفادة من هذا الكوبون هو ' || v_coupon.min_amount || ' ريال'
+        );
+    END IF;
+
+    -- التحقق من عدد مرات الاستخدام الكلي
+    IF v_coupon.usage_limit IS NOT NULL THEN
+        SELECT COUNT(*) INTO v_usage_count
+        FROM coupon_usages
+        WHERE coupon_id = v_coupon.id;
+
+        IF v_usage_count >= v_coupon.usage_limit THEN
+            RETURN json_build_object(
+                'valid', false,
+                'message', 'تم استخدام هذا الكوبون الحد الأقصى من المرات'
+            );
+        END IF;
+    END IF;
+
+    -- التحقق من عدد مرات الاستخدام للمستخدم
+    SELECT COUNT(*) INTO v_user_usage_count
+    FROM coupon_usages
+    WHERE coupon_id = v_coupon.id AND user_id = p_user_id;
+
+    IF v_user_usage_count >= v_coupon.usage_per_user THEN
+        RETURN json_build_object(
+            'valid', false,
+            'message', 'لقد استخدمت هذا الكوبون من قبل'
+        );
+    END IF;
+
+    -- حساب الخصم
+    IF v_coupon.discount_type = 'percentage' THEN
+        v_discount := p_amount * (v_coupon.discount_value / 100);
+        
+        -- تطبيق الحد الأقصى للخصم إن وجد
+        IF v_coupon.max_discount IS NOT NULL AND v_discount > v_coupon.max_discount THEN
+            v_discount := v_coupon.max_discount;
+        END IF;
+    ELSE
+        v_discount := v_coupon.discount_value;
+    END IF;
+
+    -- التأكد من أن الخصم لا يتجاوز المبلغ
+    IF v_discount > p_amount THEN
+        v_discount := p_amount;
+    END IF;
+
+    -- إرجاع النتيجة
+    RETURN json_build_object(
+        'valid', true,
+        'coupon_id', v_coupon.id,
+        'discount_type', v_coupon.discount_type,
+        'discount_value', v_coupon.discount_value,
+        'discount_amount', v_discount,
+        'final_amount', p_amount - v_discount,
+        'message', 'تم تطبيق الكوبون بنجاح'
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function لتسجيل استخدام الكوبون
+CREATE OR REPLACE FUNCTION use_coupon(
+    p_coupon_id BIGINT,
+    p_user_id INTEGER,
+    p_appointment_id BIGINT,
+    p_discount_amount DECIMAL(10, 2)
+)
+RETURNS BOOLEAN AS $$
+BEGIN
+    INSERT INTO coupon_usages (coupon_id, user_id, appointment_id, discount_amount)
+    VALUES (p_coupon_id, p_user_id, p_appointment_id, p_discount_amount);
+    
+    RETURN TRUE;
+EXCEPTION WHEN OTHERS THEN
+    RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- إدراج بيانات تجريبية
+INSERT INTO coupons (code, discount_type, discount_value, min_amount, max_discount, usage_limit, usage_per_user, start_date, end_date, description, description_ar) VALUES
+('WELCOME50', 'percentage', 50.00, 100.00, 50.00, 100, 1, NOW(), NOW() + INTERVAL '30 days', 'Welcome discount 50%', 'خصم ترحيبي 50%'),
+('VIP100', 'fixed', 100.00, 200.00, NULL, 50, 2, NOW(), NOW() + INTERVAL '60 days', 'VIP discount 100 SAR', 'خصم VIP 100 ريال'),
+('FIRST20', 'percentage', 20.00, 50.00, 30.00, NULL, 1, NOW(), NOW() + INTERVAL '90 days', 'First booking 20% off', 'خصم أول حجز 20%');
+
+
+
+-- أضف عمود للخصم في جدول appointments
+ALTER TABLE appointments
+ADD COLUMN discount_amount DECIMAL(10, 2) DEFAULT 0,
+ADD COLUMN coupon_id BIGINT REFERENCES coupons(id) ON DELETE SET NULL;
+
+-- تحديث عمود total_price ليصبح السعر النهائي بعد الخصم
+
+CREATE TABLE rewards (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  points_required INTEGER NOT NULL CHECK (points_required > 0),
+  image_url TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- فهارس
+CREATE INDEX idx_rewards_is_active ON rewards(is_active);
+CREATE INDEX idx_rewards_points ON rewards(points_required);
+
+-- Trigger للتحديث التلقائي
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_rewards_updated_at BEFORE UPDATE ON rewards
+FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+-- سياسات الأمان
+ALTER TABLE rewards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY select_active_rewards ON rewards
+  FOR SELECT
+  USING (is_active = true);
+
+
+CREATE TABLE reward_redemptions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reward_id INTEGER NOT NULL REFERENCES rewards(id) ON DELETE CASCADE,
+  points_used INTEGER NOT NULL,
+  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'used', 'expired')),
+  redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE
+);
+
+-- فهارس للأداء
+CREATE INDEX idx_redemptions_user ON reward_redemptions(user_id);
+CREATE INDEX idx_redemptions_reward ON reward_redemptions(reward_id);
+CREATE INDEX idx_redemptions_status ON reward_redemptions(status);
+
+-- سياسات الأمان
+ALTER TABLE reward_redemptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY select_own_redemptions ON reward_redemptions
+  FOR SELECT
+  USING (auth.uid()::text = user_id::text);
+
+-- دالة لحساب النقاط الحالية لأي مستخدم
+CREATE OR REPLACE FUNCTION calculate_user_loyalty_points(user_id_param INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+  total_points INTEGER;
+BEGIN
+  -- حساب مجموع النقاط من جدول loyalty_transactions
+  SELECT COALESCE(SUM(
+    CASE 
+      WHEN transaction_type IN ('earned', 'bonus') THEN points_amount
+      WHEN transaction_type IN ('redeemed', 'expired') THEN -points_amount
+      ELSE 0
+    END
+  ), 0) INTO total_points
+  FROM loyalty_transactions
+  WHERE user_id = user_id_param;
+  
+  RETURN total_points;
+END;
+$$ LANGUAGE plpgsql;
+
+-- دالة الـ Trigger
+CREATE OR REPLACE FUNCTION update_user_loyalty_points()
+RETURNS TRIGGER AS $$
+DECLARE
+  affected_user_id INTEGER;
+BEGIN
+  -- تحديد المستخدم المتأثر
+  IF TG_OP = 'DELETE' THEN
+    affected_user_id := OLD.user_id;
+  ELSE
+    affected_user_id := NEW.user_id;
+  END IF;
+  
+  -- تحديث نقاط المستخدم في جدول users
+  UPDATE users 
+  SET loyalty_points = calculate_user_loyalty_points(affected_user_id),
+      updated_at = NOW()
+  WHERE id = affected_user_id;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- حذف الـ Trigger القديم إذا كان موجوداً
+DROP TRIGGER IF EXISTS trigger_update_loyalty_points ON loyalty_transactions;
+
+-- إنشاء الـ Trigger الجديد
+CREATE TRIGGER trigger_update_loyalty_points
+AFTER INSERT OR UPDATE OR DELETE ON loyalty_transactions
+FOR EACH ROW
+EXECUTE FUNCTION update_user_loyalty_points();
+
+
+-- جدول الأسئلة الشائعة
+CREATE TABLE faqs (
+    id BIGSERIAL PRIMARY KEY,
+    question TEXT NOT NULL,
+    question_ar TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    answer_ar TEXT NOT NULL,
+    category VARCHAR(50),
+    category_ar VARCHAR(50),
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- جدول رسائل الدعم
+CREATE TABLE support_messages (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending', -- pending, replied, closed
+    admin_reply TEXT,
+    replied_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- الفهارس
+CREATE INDEX idx_faqs_active ON faqs(is_active, display_order);
+CREATE INDEX idx_support_messages_user ON support_messages(user_id);
+CREATE INDEX idx_support_messages_status ON support_messages(status);
+
+-- RLS
+ALTER TABLE faqs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE support_messages ENABLE ROW LEVEL SECURITY;
+
+-- الجميع يمكنهم رؤية الأسئلة الشائعة النشطة
+CREATE POLICY "Anyone can view active FAQs"
+ON faqs FOR SELECT
+USING (is_active = true);
+
+-- المستخدمون يمكنهم رؤية رسائلهم فقط
+CREATE POLICY "Users can view their own messages"
+ON support_messages FOR SELECT
+USING (user_id IN (SELECT id FROM users WHERE auth_uid = auth.uid()::text));
+
+-- المستخدمون يمكنهم إرسال رسائل
+CREATE POLICY "Users can insert their own messages"
+ON support_messages FOR INSERT
+WITH CHECK (user_id IN (SELECT id FROM users WHERE auth_uid = auth.uid()::text));
+
+-- بيانات تجريبية للأسئلة الشائعة
+INSERT INTO faqs (question, question_ar, answer, answer_ar, category, category_ar, display_order) VALUES
+('How do I book an appointment?', 'كيف أحجز موعد؟', 'You can book an appointment by selecting a service, choosing date and time, then confirming.', 'يمكنك حجز موعد من خلال اختيار الخدمة، ثم اختيار التاريخ والوقت، ثم التأكيد.', 'Booking', 'الحجوزات', 1),
+('Can I cancel my appointment?', 'هل يمكنني إلغاء موعدي؟', 'Yes, you can cancel your appointment from My Appointments section.', 'نعم، يمكنك إلغاء موعدك من قسم حجوزاتي.', 'Booking', 'الحجوزات', 2),
+('How do I use a coupon?', 'كيف أستخدم الكوبون؟', 'Enter the coupon code during booking and the discount will be applied automatically.', 'أدخل كود الكوبون أثناء الحجز وسيتم تطبيق الخصم تلقائياً.', 'Coupons', 'الكوبونات', 3),
+('What are loyalty points?', 'ما هي نقاط الولاء؟', 'Loyalty points are earned with each booking and can be redeemed for discounts.', 'نقاط الولاء تُكتسب مع كل حجز ويمكن استبدالها بخصومات.', 'Loyalty', 'نقاط الولاء', 4),
+('How do I contact support?', 'كيف أتواصل مع الدعم؟', 'You can contact us via WhatsApp, phone, or email from the Contact Us page.', 'يمكنك التواصل معنا عبر واتساب، الهاتف، أو البريد الإلكتروني من صفحة اتصل بنا.', 'Support', 'الدعم', 5);
+
+
+
+-- الفهارس لتحسين الأداء
+CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_appointments_date ON appointments(appointment_date);
+CREATE INDEX idx_services_category ON services(category);
+CREATE INDEX idx_employees_phone ON employees(phone);
+CREATE INDEX idx_loyalty_user ON loyalty_transactions(user_id);
+CREATE INDEX idx_reviews_user ON reviews(user_id);
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_employee_schedules_employee ON employee_schedules(employee_id);
+CREATE INDEX idx_media_related ON media(related_type, related_id);
+
+-- بيانات تجريبية للخدمات
+INSERT INTO public.service_categories (category_name, category_name_ar, description)
+VALUES
+  ('Hair Care', 'العناية بالشعر', 'خدمات العناية بالشعر المختلفة'),
+  ('Beard Grooming', 'تنظيف اللحية', 'خدمات تهذيب وتنظيف اللحية'),
+  ('Hair Coloring', 'تلوين الشعر', 'خدمات تلوين الشعر'),
+  ('Skin Care', 'العناية بالبشرة', 'خدمات العناية بالبشرة'),
+  ('Massage', 'التدليك', 'خدمات التدليك واسترخاء الجسم');
+
+INSERT INTO public.services (service_name, service_name_ar, description, description_ar, category_id, price, duration_minutes, loyalty_points, image_url, is_active, requires_booking)
+VALUES
+  ('Basic Haircut', 'قص شعر أساسي', 'A simple basic haircut for all hair types', 'قص شعر أساسي لجميع أنواع الشعر', 1, 30.00, 30, 10, 'https://example.com/images/haircut1.jpg', true, true),
+
+  ('Beard Trim', 'تهذيب اللحية', 'Trimming and shaping the beard to your style', 'تهذيب وتشكيل اللحية حسب ذوقك', 2, 25.00, 20, 8, 'https://example.com/images/beard_trim.jpg', true, true),
+
+  ('Hair Coloring', 'تلوين الشعر', 'Professional hair coloring services', 'خدمات تلوين الشعر الاحترافية', 3, 70.00, 90, 20, 'https://example.com/images/hair_coloring.jpg', true, true),
+
+  ('Facial Cleanse', 'تنظيف الوجه', 'Deep cleansing facial treatment', 'علاج تنظيف عميق للوجه', 4, 50.00, 60, 15, 'https://example.com/images/facial.jpg', true, true),
+
+  ('Full Body Massage', 'تدليك الجسم الكامل', 'Relaxing full body massage', 'تدليك مريح لكامل الجسم', 5, 80.00, 60, 25, 'https://example.com/images/massage.jpg', true, true);
+
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🎯 نظام الكوبونات التلقائية عند تحقيق معالم الولاء
+-- ═══════════════════════════════════════════════════════════════
+
+-- ✅ جدول معالم نقاط الولاء
+CREATE TABLE IF NOT EXISTS loyalty_milestones (
+  id BIGSERIAL PRIMARY KEY,
+  points_required INTEGER NOT NULL UNIQUE,
+  discount_percentage DECIMAL(5, 2) NOT NULL,
+  max_discount DECIMAL(10, 2) NULL,
+  coupon_validity_days INTEGER DEFAULT 30,
+  coupon_code_prefix VARCHAR(20) NOT NULL,
+  description TEXT,
+  description_ar TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ✅ جدول تتبع المعالم المحققة
+CREATE TABLE IF NOT EXISTS user_milestone_achievements (
+  id BIGSERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  milestone_id BIGINT REFERENCES loyalty_milestones(id) ON DELETE CASCADE,
+  coupon_id BIGINT REFERENCES coupons(id) ON DELETE SET NULL,
+  achieved_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, milestone_id)
+);
+
+-- ✅ الفهارس
+CREATE INDEX IF NOT EXISTS idx_loyalty_milestones_points ON loyalty_milestones(points_required);
+CREATE INDEX IF NOT EXISTS idx_milestone_achievements_user ON user_milestone_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_milestone_achievements_milestone ON user_milestone_achievements(milestone_id);
+
+-- ✅ RLS Policies
+ALTER TABLE loyalty_milestones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_milestone_achievements ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view milestones" ON loyalty_milestones;
+CREATE POLICY "Anyone can view milestones" ON loyalty_milestones FOR SELECT USING (is_active = true);
+
+DROP POLICY IF EXISTS "Users view their achievements" ON user_milestone_achievements;
+CREATE POLICY "Users view their achievements" ON user_milestone_achievements FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow insert achievements" ON user_milestone_achievements;
+CREATE POLICY "Allow insert achievements" ON user_milestone_achievements FOR INSERT WITH CHECK (true);
+
+-- ✅ إدراج معالم افتراضية
+INSERT INTO loyalty_milestones (points_required, discount_percentage, max_discount, coupon_validity_days, coupon_code_prefix, description_ar) VALUES
+(100, 10, 50, 30, 'LOYAL100', 'كوبون خصم 10% عند الوصول لـ 100 نقطة'),
+(300, 15, 75, 45, 'LOYAL300', 'كوبون خصم 15% عند الوصول لـ 300 نقطة'),
+(500, 20, 100, 60, 'LOYAL500', 'كوبون خصم 20% عند الوصول لـ 500 نقطة'),
+(1000, 25, 150, 90, 'VIP1000', 'كوبون خصم 25% عند الوصول لـ 1000 نقطة'),
+(2000, 30, 200, 120, 'VIP2000', 'كوبون خصم 30% عند الوصول لـ 2000 نقطة')
+ON CONFLICT (points_required) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🔧 دالة لإنشاء كوبون تلقائي عند تحقيق معلم
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION create_loyalty_coupon(
+  p_user_id INTEGER,
+  p_milestone_id BIGINT
+)
+RETURNS BIGINT AS $$
+DECLARE
+  v_milestone RECORD;
+  v_coupon_code TEXT;
+  v_random_suffix TEXT;
+  v_coupon_id BIGINT;
+  v_start_date TIMESTAMP WITH TIME ZONE;
+  v_end_date TIMESTAMP WITH TIME ZONE;
+BEGIN
+  -- جلب معلومات المعلم
+  SELECT * INTO v_milestone
+  FROM loyalty_milestones
+  WHERE id = p_milestone_id AND is_active = true;
+  
+  IF v_milestone.id IS NULL THEN
+    RETURN NULL;
+  END IF;
+  
+  -- إنشاء كود كوبون فريد
+  v_random_suffix := UPPER(SUBSTRING(MD5(RANDOM()::TEXT || NOW()::TEXT) FROM 1 FOR 6));
+  v_coupon_code := v_milestone.coupon_code_prefix || '-' || v_random_suffix;
+  
+  -- تحديد تواريخ الصلاحية
+  v_start_date := NOW();
+  v_end_date := NOW() + (v_milestone.coupon_validity_days || ' days')::INTERVAL;
+  
+  -- إنشاء الكوبون في جدول coupons
+  INSERT INTO coupons (
+    code,
+    discount_type,
+    discount_value,
+    max_discount,
+    min_amount,
+    usage_limit,
+    usage_per_user,
+    start_date,
+    end_date,
+    is_active,
+    is_vip_only,
+    description,
+    description_ar
+  ) VALUES (
+    v_coupon_code,
+    'percentage',
+    v_milestone.discount_percentage,
+    v_milestone.max_discount,
+    0,
+    1,
+    1,
+    v_start_date,
+    v_end_date,
+    true,
+    CASE WHEN v_milestone.points_required >= 1000 THEN true ELSE false END,
+    v_milestone.description,
+    v_milestone.description_ar
+  ) RETURNING id INTO v_coupon_id;
+  
+  -- تسجيل تحقيق المعلم
+  INSERT INTO user_milestone_achievements (user_id, milestone_id, coupon_id)
+  VALUES (p_user_id, p_milestone_id, v_coupon_id)
+  ON CONFLICT (user_id, milestone_id) DO NOTHING;
+  
+  -- إنشاء إشعار للمستخدم
+  BEGIN
+    INSERT INTO notifications (
+      user_id,
+      title,
+      message,
+      notification_type,
+      is_read,
+      created_at
+    ) VALUES (
+      p_user_id,
+      'مبروك! حصلت على كوبون خصم 🎉',
+      'لقد وصلت إلى ' || v_milestone.points_required || ' نقطة ولاء! استخدم الكوبون: ' || v_coupon_code || ' للحصول على خصم ' || v_milestone.discount_percentage || '%',
+      'reward',
+      false,
+      NOW()
+    );
+  EXCEPTION WHEN OTHERS THEN
+    -- تجاهل أخطاء الإشعارات
+    NULL;
+  END;
+  
+  RETURN v_coupon_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🔧 دالة للتحقق من المعالم وإنشاء كوبونات
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION check_and_create_milestone_coupons()
+RETURNS TRIGGER AS $$
+DECLARE
+  milestone RECORD;
+  v_coupon_id BIGINT;
+BEGIN
+  -- التحقق من جميع المعالم النشطة التي لم يتم تحقيقها بعد
+  FOR milestone IN 
+    SELECT lm.* 
+    FROM loyalty_milestones lm
+    WHERE lm.is_active = true 
+    AND lm.points_required <= NEW.loyalty_points
+    AND NOT EXISTS (
+      SELECT 1 FROM user_milestone_achievements uma
+      WHERE uma.user_id = NEW.id AND uma.milestone_id = lm.id
+    )
+    ORDER BY lm.points_required ASC
+  LOOP
+    -- إنشاء كوبون لهذا المعلم
+    v_coupon_id := create_loyalty_coupon(NEW.id, milestone.id);
+    
+    IF v_coupon_id IS NOT NULL THEN
+      RAISE NOTICE 'Created coupon % for user % achieving milestone %', v_coupon_id, NEW.id, milestone.id;
+    END IF;
+  END LOOP;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ✅ حذف الـ Trigger القديم إذا كان موجوداً
+DROP TRIGGER IF EXISTS trigger_check_milestone_coupons ON users;
+
+-- ✅ إنشاء الـ Trigger الجديد
+CREATE TRIGGER trigger_check_milestone_coupons
+  AFTER UPDATE OF loyalty_points ON users
+  FOR EACH ROW
+  WHEN (NEW.loyalty_points > OLD.loyalty_points)
+  EXECUTE FUNCTION check_and_create_milestone_coupons();
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🔧 دالة لجلب كوبونات الولاء الخاصة بالمستخدم
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION get_user_milestone_coupons(p_user_id INTEGER)
+RETURNS TABLE (
+  coupon_id BIGINT,
+  coupon_code VARCHAR(50),
+  discount_percentage DECIMAL(5, 2),
+  max_discount DECIMAL(10, 2),
+  expires_at TIMESTAMP WITH TIME ZONE,
+  days_left INTEGER,
+  milestone_points INTEGER,
+  is_used BOOLEAN
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    c.id AS coupon_id,
+    c.code AS coupon_code,
+    c.discount_value AS discount_percentage,
+    c.max_discount,
+    c.end_date AS expires_at,
+    EXTRACT(DAY FROM (c.end_date - NOW()))::INTEGER AS days_left,
+    lm.points_required AS milestone_points,
+    EXISTS(SELECT 1 FROM coupon_usages cu WHERE cu.coupon_id = c.id AND cu.user_id = p_user_id) AS is_used
+  FROM user_milestone_achievements uma
+  JOIN loyalty_milestones lm ON uma.milestone_id = lm.id
+  JOIN coupons c ON uma.coupon_id = c.id
+  WHERE uma.user_id = p_user_id
+  AND c.is_active = true
+  AND c.end_date > NOW()
+  AND NOT EXISTS(SELECT 1 FROM coupon_usages cu WHERE cu.coupon_id = c.id AND cu.user_id = p_user_id)
+  ORDER BY c.created_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ═══════════════════════════════════════════════════════════════
+-- ✅ تم! النظام جاهز للعمل
+-- ═══════════════════════════════════════════════════════════════
+
+
+
+-- ⚠️ اختياري: حذف الأعمدة القديمة المتعلقة بنظام المكافآت القديم
+ALTER TABLE appointments
+DROP COLUMN IF EXISTS reward_redemption_id,
+DROP COLUMN IF EXISTS discount_percentage;
+
+
+-- ✅ إضافة عمود coupon_id
+ALTER TABLE appointments
+ADD COLUMN IF NOT EXISTS coupon_id BIGINT REFERENCES coupons(id) ON DELETE SET NULL;
+
+-- ✅ إضافة فهرس
+CREATE INDEX IF NOT EXISTS idx_appointments_coupon ON appointments(coupon_id);
+
+-- ✅ تحديث التعليق
+COMMENT ON COLUMN appointments.coupon_id IS 'معرف الكوبون المستخدم في هذا الحجز';
+
+
+-- ✅ جدول إعدادات نقاط الولاء
+CREATE TABLE IF NOT EXISTS loyalty_settings (
+  id SERIAL PRIMARY KEY,
+  points_per_currency DECIMAL(10, 2) NOT NULL DEFAULT 1.00, -- نقطة لكل X ريال
+  currency_per_point DECIMAL(10, 2) NOT NULL DEFAULT 10.00, -- X ريال لكل نقطة
+  min_purchase_for_points DECIMAL(10, 2) DEFAULT 0.00, -- الحد الأدنى للشراء للحصول على نقاط
+  bonus_multiplier DECIMAL(5, 2) DEFAULT 1.00, -- مضاعف النقاط (للعروض الخاصة)
+  is_active BOOLEAN DEFAULT true,
+  description TEXT,
+  description_ar TEXT,
+  updated_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ✅ إدراج الإعدادات الافتراضية
+INSERT INTO loyalty_settings (
+  points_per_currency, 
+  currency_per_point, 
+  min_purchase_for_points,
+  bonus_multiplier,
+  description_ar
+) VALUES (
+  1.00,     -- نقطة واحدة
+  10.00,    -- لكل 10 ريال
+  0.00,     -- لا يوجد حد أدنى
+  1.00,     -- لا توجد مضاعفة
+  'نقطة واحدة مقابل كل 10 ريال من المشتريات'
+) ON CONFLICT DO NOTHING;
+
+-- ✅ فهرس
+CREATE INDEX IF NOT EXISTS idx_loyalty_settings_active ON loyalty_settings(is_active);
+
+-- ✅ RLS
+ALTER TABLE loyalty_settings ENABLE ROW LEVEL SECURITY;
+
+-- الجميع يمكنهم قراءة الإعدادات النشطة
+DROP POLICY IF EXISTS "Anyone can view active loyalty settings" ON loyalty_settings;
+CREATE POLICY "Anyone can view active loyalty settings" ON loyalty_settings
+  FOR SELECT
+  USING (is_active = true);
+
+
+-- ✅ إضافة عمود role
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'client' 
+CHECK (role IN ('client', 'admin', 'employee', 'manager'));
+
+-- ✅ تحديث فهرس
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+
+-- ✅ السياسة الصحيحة
+DROP POLICY IF EXISTS "Only admins can modify loyalty settings" ON loyalty_settings;
+CREATE POLICY "Only admins can modify loyalty settings" ON loyalty_settings
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE auth_uid = auth.uid()::text
+      AND role IN ('admin', 'manager')
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE auth_uid = auth.uid()::text
+      AND role IN ('admin', 'manager')
+    )
+  );
+
+
+
+-- ✅ إضافة أعمدة reference_type و reference_id
+ALTER TABLE loyalty_transactions
+ADD COLUMN IF NOT EXISTS reference_type VARCHAR(50),
+ADD COLUMN IF NOT EXISTS reference_id INTEGER;
+
+-- ✅ إضافة فهرس
+CREATE INDEX IF NOT EXISTS idx_loyalty_transactions_reference 
+ON loyalty_transactions(reference_type, reference_id);
+
+-- ✅ تحديث التعليقات
+COMMENT ON COLUMN loyalty_transactions.reference_type IS 'نوع المرجع (appointment, purchase, bonus, etc)';
+COMMENT ON COLUMN loyalty_transactions.reference_id IS 'معرف المرجع';
+
+
+
+
+-- ✅ إضافة عمود status للتحكم في النقاط
+ALTER TABLE loyalty_transactions
+ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending' 
+CHECK (status IN ('pending', 'completed', 'cancelled'));
+
+-- ✅ إضافة فهرس
+CREATE INDEX IF NOT EXISTS idx_loyalty_transactions_status 
+ON loyalty_transactions(status);
+
+-- ✅ تحديث دالة حساب النقاط (فقط النقاط المكتملة)
+CREATE OR REPLACE FUNCTION calculate_user_loyalty_points(user_id_param INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+  total_points INTEGER;
+BEGIN
+  -- ✅ حساب فقط النقاط ذات status = 'completed'
+  SELECT COALESCE(SUM(
+    CASE 
+      WHEN transaction_type IN ('earned', 'bonus') THEN points_amount
+      WHEN transaction_type IN ('redeemed', 'expired', 'deducted') THEN -points_amount
+      ELSE 0
+    END
+  ), 0) INTO total_points
+  FROM loyalty_transactions
+  WHERE user_id = user_id_param
+  AND status = 'completed';  -- ✅ فقط المكتملة
+  
+  RETURN total_points;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ✅ تحديث الـ Trigger
+CREATE OR REPLACE FUNCTION update_user_loyalty_points()
+RETURNS TRIGGER AS $$
+DECLARE
+  affected_user_id INTEGER;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    affected_user_id := OLD.user_id;
+  ELSE
+    affected_user_id := NEW.user_id;
+  END IF;
+  
+  -- تحديث نقاط المستخدم
+  UPDATE users 
+  SET loyalty_points = calculate_user_loyalty_points(affected_user_id),
+      updated_at = NOW()
+  WHERE id = affected_user_id;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- إعادة إنشاء الـ Trigger
+DROP TRIGGER IF EXISTS trigger_update_loyalty_points ON loyalty_transactions;
+CREATE TRIGGER trigger_update_loyalty_points
+AFTER INSERT OR UPDATE OR DELETE ON loyalty_transactions
+FOR EACH ROW
+EXECUTE FUNCTION update_user_loyalty_points();
+
+
+
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🎯 Trigger تلقائي لتفعيل النقاط عند إتمام الحجز
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION activate_loyalty_points_on_completion()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- عندما تتغير الحالة إلى completed
+  IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
+    -- تفعيل النقاط المعلقة لهذا الحجز
+    UPDATE loyalty_transactions
+    SET status = 'completed'
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending';
+    
+    RAISE NOTICE 'Activated loyalty points for appointment #%', NEW.id;
+  END IF;
+  
+  -- عندما يتم الإلغاء - إلغاء النقاط المعلقة
+  IF NEW.status = 'cancelled' AND OLD.status != 'cancelled' THEN
+    UPDATE loyalty_transactions
+    SET status = 'cancelled'
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending';
+    
+    RAISE NOTICE 'Cancelled pending loyalty points for appointment #%', NEW.id;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- إنشاء الـ Trigger
+DROP TRIGGER IF EXISTS trigger_activate_loyalty_points ON appointments;
+CREATE TRIGGER trigger_activate_loyalty_points
+  AFTER UPDATE OF status ON appointments
+  FOR EACH ROW
+  WHEN (NEW.status != OLD.status)
+  EXECUTE FUNCTION activate_loyalty_points_on_completion();
+
+
+
+
+
+
+
+
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🎯 Trigger محدث لتفعيل النقاط + إرسال إشعار
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION activate_loyalty_points_on_completion()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_points_earned INTEGER;
+  v_user_id INTEGER;
+  v_service_name TEXT;
+BEGIN
+  -- عندما تتغير الحالة إلى completed
+  IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
+    -- الحصول على معلومات النقاط
+    SELECT points_amount, user_id 
+    INTO v_points_earned, v_user_id
+    FROM loyalty_transactions
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending'
+    LIMIT 1;
+    
+    -- تفعيل النقاط المعلقة
+    UPDATE loyalty_transactions
+    SET status = 'completed'
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending';
+    
+    -- إرسال إشعار إذا كانت هناك نقاط
+    IF v_points_earned IS NOT NULL AND v_points_earned > 0 THEN
+      -- جلب اسم الخدمة
+      SELECT service_name_ar 
+      INTO v_service_name
+      FROM appointment_services
+      JOIN services ON appointment_services.service_id = services.id
+      WHERE appointment_services.appointment_id = NEW.id
+      LIMIT 1;
+      
+      -- إنشاء الإشعار
+      INSERT INTO notifications (
+        user_id,
+        title,
+        message,
+        notification_type,
+        is_read,
+        created_at
+      ) VALUES (
+        v_user_id,
+        'مبروك! حصلت على نقاط ولاء 🎉',
+        'لقد حصلت على ' || v_points_earned || ' نقطة ولاء من حجزك "' || COALESCE(v_service_name, 'الخدمة') || '"',
+        'loyalty',
+        false,
+        NOW()
+      );
+      
+      RAISE NOTICE 'Activated % loyalty points for appointment #% and sent notification', v_points_earned, NEW.id;
+    END IF;
+  END IF;
+  
+  -- عندما يتم الإلغاء - إلغاء النقاط المعلقة
+  IF NEW.status = 'cancelled' AND OLD.status != 'cancelled' THEN
+    UPDATE loyalty_transactions
+    SET status = 'cancelled'
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending';
+    
+    RAISE NOTICE 'Cancelled pending loyalty points for appointment #%', NEW.id;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- إعادة إنشاء الـ Trigger
+DROP TRIGGER IF EXISTS trigger_activate_loyalty_points ON appointments;
+CREATE TRIGGER trigger_activate_loyalty_points
+  AFTER UPDATE OF status ON appointments
+  FOR EACH ROW
+  WHEN (NEW.status != OLD.status)
+  EXECUTE FUNCTION activate_loyalty_points_on_completion();
+
+
+
+
+-- اختبار تحديث الحالة
+UPDATE appointments 
+SET status = 'completed' 
+WHERE id = YOUR_APPOINTMENT_ID;
+
+-- التحقق من الإشعارات
+SELECT * FROM notifications 
+WHERE user_id = YOUR_USER_ID 
+AND notification_type = 'loyalty'
+ORDER BY created_at DESC;
+
+
+
+
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🎯 Trigger محدث لتفعيل النقاط + إرسال إشعار (النسخة الصحيحة)
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION activate_loyalty_points_on_completion()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_points_earned INTEGER;
+  v_user_id INTEGER;
+  v_service_name TEXT;
+BEGIN
+  -- ═══════════════════════════════════════════════════════════════
+  -- عندما تتغير الحالة إلى completed
+  -- ═══════════════════════════════════════════════════════════════
+  IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
+    -- الحصول على معلومات النقاط
+    SELECT points_amount, user_id 
+    INTO v_points_earned, v_user_id
+    FROM loyalty_transactions
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending'
+    LIMIT 1;
+    
+    -- تفعيل النقاط المعلقة
+    UPDATE loyalty_transactions
+    SET status = 'completed'
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending';
+    
+    -- إرسال إشعار إذا كانت هناك نقاط
+    IF v_points_earned IS NOT NULL AND v_points_earned > 0 THEN
+      -- جلب اسم الخدمة
+      SELECT service_name_ar 
+      INTO v_service_name
+      FROM appointment_services
+      JOIN services ON appointment_services.service_id = services.id
+      WHERE appointment_services.appointment_id = NEW.id
+      LIMIT 1;
+      
+      -- ✅ إنشاء الإشعار بالحقول الصحيحة
+      INSERT INTO notifications (
+        user_id,
+        appointment_id,
+        title,
+        body,              -- ✅ body بدلاً من message
+        type,              -- ✅ type بدلاً من notification_type
+        is_read,
+        data,
+        created_at
+      ) VALUES (
+        v_user_id,
+        NEW.id,
+        'مبروك! حصلت على نقاط ولاء 🎉',
+        'لقد حصلت على ' || v_points_earned || ' نقطة ولاء من حجزك "' || COALESCE(v_service_name, 'الخدمة') || '"',
+        'loyalty',
+        false,
+        jsonb_build_object(
+          'points_earned', v_points_earned,
+          'appointment_id', NEW.id,
+          'service_name', v_service_name
+        ),
+        NOW()
+      );
+      
+      RAISE NOTICE 'Activated % loyalty points for appointment #% and sent notification', v_points_earned, NEW.id;
+    END IF;
+  END IF;
+  
+  -- ═══════════════════════════════════════════════════════════════
+  -- عندما يتم الإلغاء - إلغاء النقاط المعلقة
+  -- ═══════════════════════════════════════════════════════════════
+  IF NEW.status = 'cancelled' AND OLD.status != 'cancelled' THEN
+    UPDATE loyalty_transactions
+    SET status = 'cancelled'
+    WHERE reference_type = 'appointment'
+      AND reference_id = NEW.id
+      AND status = 'pending';
+    
+    RAISE NOTICE 'Cancelled pending loyalty points for appointment #%', NEW.id;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- إعادة إنشاء الـ Trigger
+DROP TRIGGER IF EXISTS trigger_activate_loyalty_points ON appointments;
+CREATE TRIGGER trigger_activate_loyalty_points
+  AFTER UPDATE OF status ON appointments
+  FOR EACH ROW
+  WHEN (NEW.status != OLD.status)
+  EXECUTE FUNCTION activate_loyalty_points_on_completion();
+
+-- ✅ تم! الآن سيعمل بدون أخطاء
+
+
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- 🔧 إصلاح RLS Policies لجدول reviews (النسخة النهائية)
+-- ═══════════════════════════════════════════════════════════════
+
+-- 1️⃣ تفعيل RLS على الجدول
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+-- 2️⃣ حذف جميع السياسات القديمة
+DROP POLICY IF EXISTS "Anyone can view reviews" ON reviews;
+DROP POLICY IF EXISTS "Users can view all reviews" ON reviews;
+DROP POLICY IF EXISTS "Users can insert their own reviews" ON reviews;
+DROP POLICY IF EXISTS "Authenticated users can insert reviews" ON reviews;
+DROP POLICY IF EXISTS "Users can update their own reviews" ON reviews;
+DROP POLICY IF EXISTS "Users can delete their own reviews" ON reviews;
+DROP POLICY IF EXISTS "Allow all operations on reviews" ON reviews;
+
+-- 3️⃣ إنشاء السياسات الصحيحة
+
+-- ✅ عرض جميع التقييمات المعتمدة (للجميع)
+CREATE POLICY "Anyone can view approved reviews"
+ON reviews FOR SELECT
+USING (is_approved = true);
+
+-- ✅ إضافة تقييم جديد (ربط user_id بـ auth.uid عبر جدول users)
+CREATE POLICY "Authenticated users can insert reviews"
+ON reviews FOR INSERT
+TO authenticated
+WITH CHECK (
+  user_id IN (
+    SELECT id FROM users WHERE uuid::text = auth.uid()::text
+  )
+);
+
+-- ✅ تعديل التقييم الخاص بالمستخدم فقط
+CREATE POLICY "Users can update their own reviews"
+ON reviews FOR UPDATE
+TO authenticated
+USING (
+  user_id IN (
+    SELECT id FROM users WHERE uuid::text = auth.uid()::text
+  )
+)
+WITH CHECK (
+  user_id IN (
+    SELECT id FROM users WHERE uuid::text = auth.uid()::text
+  )
+);
+
+-- ✅ حذف التقييم الخاص بالمستخدم فقط
+CREATE POLICY "Users can delete their own reviews"
+ON reviews FOR DELETE
+TO authenticated
+USING (
+  user_id IN (
+    SELECT id FROM users WHERE uuid::text = auth.uid()::text
+  )
+);
+
+-- ✅ (اختياري) السماح للإدمن برؤية جميع التقييمات
+CREATE POLICY "Admin can view all reviews"
+ON reviews FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM users 
+    WHERE uuid::text = auth.uid()::text 
+    AND role IN ('admin', 'manager')
+  )
+);
+
+-- ✅ (اختياري) السماح للإدمن بتعديل أي تقييم
+CREATE POLICY "Admin can update any review"
+ON reviews FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM users 
+    WHERE uuid::text = auth.uid()::text 
+    AND role IN ('admin', 'manager')
+  )
+)
+WITH CHECK (true);
+
+-- 4️⃣ التحقق من السياسات
+SELECT 
+  tablename,
+  policyname,
+  permissive,
+  roles,
+  cmd,
+  qual
+FROM pg_policies
+WHERE tablename = 'reviews'
+ORDER BY policyname;
+
+-- ✅ تم! الآن يمكن إضافة التقييمات بنجاح
+
+
+
+-- إضافة user_id في coupons
+ALTER TABLE coupons
+ADD COLUMN user_id INTEGER NULL,
+ADD CONSTRAINT coupons_user_id_fkey 
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+
+-- إنشاء index
+CREATE INDEX idx_coupons_user_id ON coupons(user_id);
+
+
+
+
+
+
+CREATE TABLE working_hours (
+  id SERIAL PRIMARY KEY,
+  day_of_week INT NOT NULL, -- 0 = الأحد, 1 = الاثنين, ... 6 = السبت
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- إدراج أوقات العمل
+INSERT INTO working_hours (day_of_week, start_time, end_time) VALUES
+  (0, '09:00', '01:00'), -- الأحد
+  (1, '09:00', '01:00'), -- الاثنين
+  (2, '09:00', '01:00'), -- الثلاثاء
+  (3, '09:00', '01:00'), -- الأربعاء
+  (4, '09:00', '01:00'), -- الخميس
+  (5, '09:00', '01:00'), -- الجمعة
+  (6, '09:00', '01:00'); -- السبت
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- Storage Policies for profile-images (Custom Auth)
+-- ═══════════════════════════════════════════════════════════════
+
+-- ✅ 1. Public Read Access
+-- السماح للجميع بقراءة الصور
+CREATE POLICY "Public Read Access"
+ON storage.objects 
+FOR SELECT
+TO public
+USING ( bucket_id = 'profile-images' );
+
+-- ✅ 2. Allow All Upload (سيتم التحكم من Backend)
+-- السماح برفع الصور (يمكنك التحكم من الـ API Key)
+CREATE POLICY "Allow Upload"
+ON storage.objects 
+FOR INSERT
+TO public
+WITH CHECK ( bucket_id = 'profile-images' );
+
+-- ✅ 3. Allow All Update
+-- السماح بتحديث الصور
+CREATE POLICY "Allow Update"
+ON storage.objects 
+FOR UPDATE
+TO public
+USING ( bucket_id = 'profile-images' )
+WITH CHECK ( bucket_id = 'profile-images' );
+
+-- ✅ 4. Allow All Delete
+-- السماح بحذف الصور
+CREATE POLICY "Allow Delete"
+ON storage.objects 
+FOR DELETE
+TO public
+USING ( bucket_id = 'profile-images' );
+
+
+
+-- في Supabase SQL Editor
+ALTER TABLE users 
+ADD COLUMN fcm_token TEXT;
+
+CREATE INDEX idx_users_fcm_token ON users(fcm_token);
