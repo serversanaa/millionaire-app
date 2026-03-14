@@ -592,14 +592,50 @@ class AppointmentProvider extends ChangeNotifier {
   }
 
 
+  // Future<AppointmentModel?> getAppointmentById(int appointmentId) async {
+  //   try {
+  //     final response = await Supabase.instance.client
+  //         .from('appointments')
+  //         .select('*, appointment_services(*, services(*))')
+  //         .eq('id', appointmentId)
+  //         .single();
+  //
+  //     return AppointmentModel.fromJson(response as Map<String, dynamic>);
+  //   } catch (e) {
+  //     debugPrint('❌ خطأ في جلب الحجز: $e');
+  //     return null;
+  //   }
+  // }
+
   Future<AppointmentModel?> getAppointmentById(int appointmentId) async {
     try {
       final response = await Supabase.instance.client
           .from('appointments')
-          .select('*, appointment_services(*, services(*))')
+          .select('''
+      *,
+      appointment_services(
+        *,
+        services(
+          id,
+          service_name,
+          service_name_ar,
+          price,
+          duration_minutes,
+          image_url
+        )
+      ),
+      employees!appointments_employee_id_fkey(
+        id,
+        full_name,
+        job_title,
+        profile_image_url
+      )
+    ''')
           .eq('id', appointmentId)
           .single();
 
+
+      debugPrint('✅ بيانات الحجز: $response'); // ✅ للتشخيص
       return AppointmentModel.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       debugPrint('❌ خطأ في جلب الحجز: $e');

@@ -144,49 +144,87 @@ class EmployeeModel {
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json) {
     return EmployeeModel(
-      id: parseInt(json['id']),
-      fullName: parseString(json['full_name']),
-      phone: parseString(json['phone']),
-      email: parseString(json['email'], defaultValue: ''),
+      id:           parseInt(json['id']),
+      fullName:     parseString(json['full_name']),
+      phone:        parseString(json['phone']),
+      email:        parseString(json['email'], defaultValue: ''),
       employeeCode: parseString(json['employee_code']),
       specialties: json['specialties'] != null && json['specialties'] is List
           ? List<String>.from(json['specialties'] as List)
           : null,
       profileImageUrl: parseString(json['profile_image_url'], defaultValue: ''),
-      hireDate: parseDateTime(json['hire_date']) ?? DateTime.now(),
-      salary: json['salary'] != null ? parseDouble(json['salary']) : null,
-      commissionRate: parseDouble(json['commission_rate'], defaultValue: 0.0),
-      workingHoursStart:
-      parseString(json['working_hours_start'], defaultValue: '09:00:00'),
-      workingHoursEnd:
-      parseString(json['working_hours_end'], defaultValue: '22:00:00'),
+      hireDate:     parseDateTime(json['hire_date']) ?? DateTime.now(),
+      salary:       json['salary'] != null ? parseDouble(json['salary']) : null,
+      commissionRate:    parseDouble(json['commission_rate'], defaultValue: 0.0),
+      workingHoursStart: parseString(json['working_hours_start'], defaultValue: '09:00:00'),
+      workingHoursEnd:   parseString(json['working_hours_end'], defaultValue: '22:00:00'),
       workingDays: json['working_days'] != null && json['working_days'] is List
           ? List<int>.from(json['working_days'] as List)
           : [1, 2, 3, 4, 5, 6, 7],
-      isActive: parseBool(json['is_active'], defaultValue: true),
+      isActive:  parseBool(json['is_active'], defaultValue: true),
       createdAt: parseDateTime(json['created_at']),
       updatedAt: parseDateTime(json['updated_at']),
-
-      // ✅ rating / average_rating كلاهما مقبول من قاعدة البيانات
       averageRating: json['average_rating'] != null
           ? parseDouble(json['average_rating'])
           : json['rating'] != null
           ? parseDouble(json['rating'])
           : null,
-
-      // ✅ total_reviews / total_appointments كلاهما مقبول
       totalReviews: json['total_reviews'] != null
           ? parseInt(json['total_reviews'])
           : json['total_appointments'] != null
           ? parseInt(json['total_appointments'])
           : null,
-
-      // ✅ job_title من قاعدة البيانات
       jobTitle: json['job_title'] != null
           ? parseString(json['job_title'], defaultValue: '')
           : null,
     );
   }
+
+  // factory EmployeeModel.fromJson(Map<String, dynamic> json) {
+  //   return EmployeeModel(
+  //     id: parseInt(json['id']),
+  //     fullName: parseString(json['full_name']),
+  //     phone: parseString(json['phone']),
+  //     email: parseString(json['email'], defaultValue: ''),
+  //     employeeCode: parseString(json['employee_code']),
+  //     specialties: json['specialties'] != null && json['specialties'] is List
+  //         ? List<String>.from(json['specialties'] as List)
+  //         : null,
+  //     profileImageUrl: parseString(json['profile_image_url'], defaultValue: ''),
+  //     hireDate: parseDateTime(json['hire_date']) ?? DateTime.now(),
+  //     salary: json['salary'] != null ? parseDouble(json['salary']) : null,
+  //     commissionRate: parseDouble(json['commission_rate'], defaultValue: 0.0),
+  //     workingHoursStart:
+  //     parseString(json['working_hours_start'], defaultValue: '09:00:00'),
+  //     workingHoursEnd:
+  //     parseString(json['working_hours_end'], defaultValue: '22:00:00'),
+  //     workingDays: json['working_days'] != null && json['working_days'] is List
+  //         ? List<int>.from(json['working_days'] as List)
+  //         : [1, 2, 3, 4, 5, 6, 7],
+  //     isActive: parseBool(json['is_active'], defaultValue: true),
+  //     createdAt: parseDateTime(json['created_at']),
+  //     updatedAt: parseDateTime(json['updated_at']),
+  //
+  //     // ✅ rating / average_rating كلاهما مقبول من قاعدة البيانات
+  //     averageRating: json['average_rating'] != null
+  //         ? parseDouble(json['average_rating'])
+  //         : json['rating'] != null
+  //         ? parseDouble(json['rating'])
+  //         : null,
+  //
+  //     // ✅ total_reviews / total_appointments كلاهما مقبول
+  //     totalReviews: json['total_reviews'] != null
+  //         ? parseInt(json['total_reviews'])
+  //         : json['total_appointments'] != null
+  //         ? parseInt(json['total_appointments'])
+  //         : null,
+  //
+  //     // ✅ job_title من قاعدة البيانات
+  //     jobTitle: json['job_title'] != null
+  //         ? parseString(json['job_title'], defaultValue: '')
+  //         : null,
+  //   );
+  // }
 
   Map<String, dynamic> toJson() {
     return {

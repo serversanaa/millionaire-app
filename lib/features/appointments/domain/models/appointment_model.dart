@@ -329,6 +329,9 @@ class AppointmentModel {
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
+    // ✅ استخراج بيانات الموظف من الكائن المتداخل
+    final employeeData = json['employees'] as Map<String, dynamic>?;
+
     return AppointmentModel(
       id:                  parseInt(json['id']),
       userId:              parseInt(json['user_id']),
@@ -350,15 +353,21 @@ class AppointmentModel {
       createdAt:           parseDateTime(json['created_at']),
       updatedAt:           parseDateTime(json['updated_at']),
       couponId:            json['coupon_id'] as int?,
-      // ✅ جديد
       paymentReceiptUrl:   json['payment_receipt_url'] as String?,
       electronicWalletId:  json['electronic_wallet_id'] != null
           ? parseInt(json['electronic_wallet_id'])
           : null,
       personsCount:        parseInt(json['persons_count']) ?? 1,
-      // عرض
-      employeeName:        parseString(json['employee_name'], defaultValue: ''),
-      employeeImageUrl:    parseString(json['employee_image_url'], defaultValue: ''),
+
+      // ✅ إصلاح: قراءة من الكائن المتداخل أولاً، ثم fallback للحقل المباشر
+      employeeName: employeeData != null
+          ? parseString(employeeData['full_name'], defaultValue: '')
+          : parseString(json['employee_name'], defaultValue: ''),
+
+      employeeImageUrl: employeeData != null
+          ? parseString(employeeData['profile_image_url'], defaultValue: '')
+          : parseString(json['employee_image_url'], defaultValue: ''),
+
       services: json['appointment_services'] != null
           ? (json['appointment_services'] as List)
           .map((s) => AppointmentService.fromJson(s as Map<String, dynamic>))
@@ -374,6 +383,53 @@ class AppointmentModel {
           : null,
     );
   }
+
+  // factory AppointmentModel.fromJson(Map<String, dynamic> json) {
+  //   return AppointmentModel(
+  //     id:                  parseInt(json['id']),
+  //     userId:              parseInt(json['user_id']),
+  //     employeeId:          json['employee_id'] != null ? parseInt(json['employee_id']) : null,
+  //     appointmentDate:     parseDateTime(json['appointment_date']) ?? DateTime.now(),
+  //     appointmentTime:     parseString(json['appointment_time']),
+  //     durationMinutes:     parseInt(json['duration_minutes']) ?? 30,
+  //     totalPrice:          parseDouble(json['total_price']),
+  //     status:              parseString(json['status'], defaultValue: 'pending'),
+  //     paymentStatus:       parseString(json['payment_status'], defaultValue: 'unpaid'),
+  //     paymentMethod:       parseString(json['payment_method'], defaultValue: ''),
+  //     notes:               parseString(json['notes'], defaultValue: ''),
+  //     clientName:          parseString(json['client_name']),
+  //     clientPhone:         parseString(json['client_phone']),
+  //     loyaltyPointsEarned: parseInt(json['loyalty_points_earned']) ?? 0,
+  //     loyaltyPointsUsed:   parseInt(json['loyalty_points_used']) ?? 0,
+  //     discountAmount:      parseDouble(json['discount_amount'], defaultValue: 0.0),
+  //     createdByEmployee:   json['created_by_employee'] != null ? parseInt(json['created_by_employee']) : null,
+  //     createdAt:           parseDateTime(json['created_at']),
+  //     updatedAt:           parseDateTime(json['updated_at']),
+  //     couponId:            json['coupon_id'] as int?,
+  //     // ✅ جديد
+  //     paymentReceiptUrl:   json['payment_receipt_url'] as String?,
+  //     electronicWalletId:  json['electronic_wallet_id'] != null
+  //         ? parseInt(json['electronic_wallet_id'])
+  //         : null,
+  //     personsCount:        parseInt(json['persons_count']) ?? 1,
+  //     // عرض
+  //     employeeName:        parseString(json['employee_name'], defaultValue: ''),
+  //     employeeImageUrl:    parseString(json['employee_image_url'], defaultValue: ''),
+  //     services: json['appointment_services'] != null
+  //         ? (json['appointment_services'] as List)
+  //         .map((s) => AppointmentService.fromJson(s as Map<String, dynamic>))
+  //         .toList()
+  //         : null,
+  //     persons: json['appointment_persons'] != null
+  //         ? (json['appointment_persons'] as List)
+  //         .map((p) => AppointmentPersonModel.fromJson(p as Map<String, dynamic>))
+  //         .toList()
+  //         : null,
+  //     electronicWallet: json['electronic_wallets'] != null
+  //         ? ElectronicWalletModel.fromJson(json['electronic_wallets'] as Map<String, dynamic>)
+  //         : null,
+  //   );
+  // }
 
   Map<String, dynamic> toJson() {
     return {
@@ -525,6 +581,9 @@ class AppointmentService {
   });
 
   factory AppointmentService.fromJson(Map<String, dynamic> json) {
+    // ✅ استخراج بيانات الخدمة من الكائن المتداخل
+    final serviceData = json['services'] as Map<String, dynamic>?;
+
     return AppointmentService(
       id:              parseInt(json['id']),
       appointmentId:   parseInt(json['appointment_id']),
@@ -536,13 +595,40 @@ class AppointmentService {
       startTime:       parseDateTime(json['start_time']),
       endTime:         parseDateTime(json['end_time']),
       notes:           parseString(json['notes'], defaultValue: ''),
-      serviceName:     parseString(json['service_name'], defaultValue: ''),
-      serviceNameAr:   parseString(json['service_name_ar'], defaultValue: ''),
-      // ✅ جديد
-      personId:        json['person_id'] != null ? parseInt(json['person_id']) : null,
-      personName:      parseString(json['person_name'], defaultValue: ''),
+
+      // ✅ إصلاح: اقرأ من الكائن المتداخل أولاً، ثم fallback للحقل المباشر
+      serviceName: serviceData != null
+          ? parseString(serviceData['service_name'], defaultValue: '')
+          : parseString(json['service_name'], defaultValue: ''),
+
+      serviceNameAr: serviceData != null
+          ? parseString(serviceData['service_name_ar'], defaultValue: '')
+          : parseString(json['service_name_ar'], defaultValue: ''),
+
+      personId:   json['person_id'] != null ? parseInt(json['person_id']) : null,
+      personName: parseString(json['person_name'], defaultValue: ''),
     );
   }
+
+  // factory AppointmentService.fromJson(Map<String, dynamic> json) {
+  //   return AppointmentService(
+  //     id:              parseInt(json['id']),
+  //     appointmentId:   parseInt(json['appointment_id']),
+  //     serviceId:       parseInt(json['service_id']),
+  //     servicePrice:    parseDouble(json['service_price']),
+  //     serviceDuration: parseInt(json['service_duration']) ?? 0,
+  //     employeeId:      json['employee_id'] != null ? parseInt(json['employee_id']) : null,
+  //     status:          parseString(json['status'], defaultValue: 'pending'),
+  //     startTime:       parseDateTime(json['start_time']),
+  //     endTime:         parseDateTime(json['end_time']),
+  //     notes:           parseString(json['notes'], defaultValue: ''),
+  //     serviceName:     parseString(json['service_name'], defaultValue: ''),
+  //     serviceNameAr:   parseString(json['service_name_ar'], defaultValue: ''),
+  //     // ✅ جديد
+  //     personId:        json['person_id'] != null ? parseInt(json['person_id']) : null,
+  //     personName:      parseString(json['person_name'], defaultValue: ''),
+  //   );
+  // }
 
   Map<String, dynamic> toJson() {
     return {

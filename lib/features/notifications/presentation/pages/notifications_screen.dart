@@ -160,7 +160,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                         Container(
                           padding: EdgeInsets.all(6.r),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha:0.1),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Icon(Icons.done_all_rounded, color: Colors.green, size: 18.sp),
@@ -184,7 +184,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       Container(
                         padding: EdgeInsets.all(6.r),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Icon(Icons.delete_sweep_rounded, color: AppColors.error, size: 18.sp),
@@ -208,7 +208,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       Container(
                         padding: EdgeInsets.all(6.r),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Icon(Icons.delete_forever_rounded, color: AppColors.error, size: 18.sp),
@@ -331,8 +331,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                     decoration: BoxDecoration(
                       color: _tabController.index == 0
-                          ? Colors.white.withOpacity(0.2)
-                          : AppColors.darkRed.withOpacity(0.1),
+                          ? Colors.white.withValues(alpha:0.2)
+                          : AppColors.darkRed.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Text(
@@ -358,7 +358,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                     decoration: BoxDecoration(
                       color: _tabController.index == 1
-                          ? Colors.white.withOpacity(0.2)
+                          ? Colors.white.withValues(alpha:0.2)
                           : AppColors.darkRed,
                       borderRadius: BorderRadius.circular(10.r),
                     ),
@@ -474,7 +474,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         margin: EdgeInsets.only(bottom: 12.h),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.error.withOpacity(0.8), AppColors.error],
+            colors: [AppColors.error.withValues(alpha:0.8), AppColors.error],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -533,18 +533,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
           decoration: BoxDecoration(
             color: notification.isRead
                 ? (isDark ? const Color(0xFF1E1E1E) : Colors.white)
-                : (isDark ? const Color(0xFF2A2A2A) : AppColors.darkRed.withOpacity(0.08)),
+                : (isDark ? const Color(0xFF2A2A2A) : AppColors.darkRed.withValues(alpha:0.08)),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
               color: notification.isRead
                   ? (isDark ? Colors.grey.shade800 : Colors.grey.shade200)
-                  : AppColors.darkRed.withOpacity(0.3),
+                  : AppColors.darkRed.withValues(alpha:0.3),
               width: notification.isRead ? 1 : 2,
             ),
             boxShadow: [
               if (!notification.isRead)
                 BoxShadow(
-                  color: AppColors.darkRed.withOpacity(0.1),
+                  color: AppColors.darkRed.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -556,7 +556,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
               Container(
                 padding: EdgeInsets.all(12.r),
                 decoration: BoxDecoration(
-                  color: _getNotificationColor(notification.type).withOpacity(0.1),
+                  color: _getNotificationColor(notification.type).withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
@@ -592,7 +592,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.darkRed.withOpacity(0.4),
+                                  color: AppColors.darkRed.withValues(alpha:0.4),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 ),
@@ -721,7 +721,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
           Icon(
             Icons.check_circle_outline_rounded,
             size: 80.sp,
-            color: Colors.green.withOpacity(0.5),
+            color: Colors.green.withValues(alpha:0.5),
           ).animate().fadeIn().scale(),
           SizedBox(height: 20.h),
           Text(
@@ -770,7 +770,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
               Container(
                 padding: EdgeInsets.all(8.r),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1),
+                  color: AppColors.error.withValues(alpha:0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24.sp),
