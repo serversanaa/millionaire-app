@@ -592,6 +592,22 @@ class AppointmentProvider extends ChangeNotifier {
   }
 
 
+  Future<AppointmentModel?> getAppointmentById(int appointmentId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('appointments')
+          .select('*, appointment_services(*, services(*))')
+          .eq('id', appointmentId)
+          .single();
+
+      return AppointmentModel.fromJson(response as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ خطأ في جلب الحجز: $e');
+      return null;
+    }
+  }
+
+
   // ══════════════════════════════════════════════════════════════════
 // ✅ EMPLOYEE AVAILABILITY CHECK
 // ══════════════════════════════════════════════════════════════════

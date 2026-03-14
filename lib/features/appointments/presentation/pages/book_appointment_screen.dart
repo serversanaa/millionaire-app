@@ -4177,71 +4177,155 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
 
       if (mounted) {
         setState(() { _isEmployeeAvailable = available; _isCheckingAvailability = false; });
-        if (!available) _showConflictDialog(employee);
+        if (!available) showConflictDialog(employee);
       }
     } catch (_) {
       if (mounted) setState(() { _isEmployeeAvailable = true; _isCheckingAvailability = false; });
     }
   }
 
-  void _showConflictDialog(EmployeeModel employee) {
+  void showConflictDialog(EmployeeModel employee) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
-      context: context,
+      context:              context,
+      barrierDismissible:   false, // ✅ لا يُغلق بالضغط خارجه
       builder: (ctx) => Directionality(
         textDirection: ui.TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.r)),
           title: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8.r),
-                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), shape: BoxShape.circle),
-                child: Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24.sp),
+                padding:    EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  color:  Colors.red.withOpacity(0.1),
+                  shape:  BoxShape.circle,
+                ),
+                child: Icon(Icons.block_rounded,
+                    color: Colors.red, size: 24.sp),
               ),
               SizedBox(width: 12.w),
-              Text('تعارض في الموعد', style: TextStyle(
-                fontSize: 18.sp, fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : AppColors.black, fontFamily: 'Cairo',
-              )),
+              Text(
+                'المعلم غير متاح',
+                style: TextStyle(
+                  fontSize:   18.sp,
+                  fontWeight: FontWeight.bold,
+                  color:      isDark ? Colors.white : AppColors.black,
+                  fontFamily: 'Cairo',
+                ),
+              ),
             ],
           ),
           content: Text(
-            '${employee.fullName} لديه موعد آخر في هذا الوقت.\nهل تريد الاستمرار أو اختيار حلاق آخر؟',
+            'المعلم ${employee.fullName} لديه موعد آخر في هذا الوقت.\n'
+                'يجب اختيار معلم حلاقة آخر متاح للمتابعة.',
             style: TextStyle(
-              fontSize: 14.sp, height: 1.6, fontFamily: 'Cairo',
-              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+              fontSize:   14.sp,
+              height:     1.6,
+              fontFamily: 'Cairo',
+              color:      isDark
+                  ? Colors.grey.shade300
+                  : Colors.grey.shade700,
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                setState(() { selectedEmployee = null; _isEmployeeAvailable = null; });
-              },
-              child: Text('اختيار آخر', style: TextStyle(
-                color: AppColors.darkRed, fontFamily: 'Cairo',
-                fontWeight: FontWeight.bold, fontSize: 14.sp,
-              )),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                setState(() => _isEmployeeAvailable = true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+            // ✅ زر واحد فقط — إجباري
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    selectedEmployee    = null;
+                    _isEmployeeAvailable = null;
+                  });
+                },
+                icon:  Icon(Icons.person_search_rounded, size: 20.sp),
+                label: Text(
+                  'اختيار معلم آخر',
+                  style: TextStyle(
+                    fontSize:   14.sp,
+                    fontFamily: 'Cairo',
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.darkRed,
+                  foregroundColor: Colors.white,
+                  padding:         EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
               ),
-              child: Text('الاستمرار على أي حال',
-                  style: TextStyle(color: Colors.white, fontFamily: 'Cairo', fontSize: 14.sp)),
             ),
           ],
         ),
       ),
     );
   }
+
+  // void _showConflictDialog(EmployeeModel employee) {
+  //   final isDark = Theme.of(context).brightness == Brightness.dark;
+  //   showDialog(
+  //     context: context,
+  //     builder: (ctx) => Directionality(
+  //       textDirection: ui.TextDirection.rtl,
+  //       child: AlertDialog(
+  //         backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+  //         title: Row(
+  //           children: [
+  //             Container(
+  //               padding: EdgeInsets.all(8.r),
+  //               decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), shape: BoxShape.circle),
+  //               child: Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24.sp),
+  //             ),
+  //             SizedBox(width: 12.w),
+  //             Text('تعارض في الموعد', style: TextStyle(
+  //               fontSize: 18.sp, fontWeight: FontWeight.bold,
+  //               color: isDark ? Colors.white : AppColors.black, fontFamily: 'Cairo',
+  //             )),
+  //           ],
+  //         ),
+  //         content: Text(
+  //           '${employee.fullName} لديه موعد آخر في هذا الوقت.\nهل تريد الاستمرار أو اختيار حلاق آخر؟',
+  //           style: TextStyle(
+  //             fontSize: 14.sp, height: 1.6, fontFamily: 'Cairo',
+  //             color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+  //           ),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.pop(ctx);
+  //               setState(() { selectedEmployee = null; _isEmployeeAvailable = null; });
+  //             },
+  //             child: Text('اختيار آخر', style: TextStyle(
+  //               color: AppColors.darkRed, fontFamily: 'Cairo',
+  //               fontWeight: FontWeight.bold, fontSize: 14.sp,
+  //             )),
+  //           ),
+  //           ElevatedButton(
+  //             onPressed: () {
+  //               Navigator.pop(ctx);
+  //               setState(() => _isEmployeeAvailable = true);
+  //             },
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: Colors.orange,
+  //               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+  //             ),
+  //             child: Text('الاستمرار على أي حال',
+  //                 style: TextStyle(color: Colors.white, fontFamily: 'Cairo', fontSize: 14.sp)),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // ══════════════════════════════════════════════════════════════════
   // HELPERS
@@ -4267,15 +4351,35 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
 
   bool get canProceed {
     switch (currentStep) {
-      case 0: return selectedDate != null;
-      case 1: return selectedTime != null;
-      case 2: return true;
+      case 0:
+        return selectedDate != null;
+      case 1:
+        return selectedTime != null;
+      case 2:
+      // ✅ يمنع التالي إذا المعلم غير متاح أو لم يتحقق بعد
+        if (selectedEmployee == null) return true; // أفضل حلاق متاح
+        return _isEmployeeAvailable == true;         // ✅ يجب أن يكون true فقط
       case 3:
-        if (paymentMethod == 'electronic') return selectedWallet != null && receiptFile != null;
+        if (paymentMethod == 'electronic') {
+          return selectedWallet != null && receiptFile != null;
+        }
         return true;
-      default: return false;
+      default:
+        return false;
     }
   }
+
+  // bool get canProceed {
+  //   switch (currentStep) {
+  //     case 0: return selectedDate != null;
+  //     case 1: return selectedTime != null;
+  //     case 2: return true;
+  //     case 3:
+  //       if (paymentMethod == 'electronic') return selectedWallet != null && receiptFile != null;
+  //       return true;
+  //     default: return false;
+  //   }
+  // }
 
   void _handleNextOrConfirm() {
     if (currentStep < 3) {

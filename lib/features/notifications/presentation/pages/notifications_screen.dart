@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:millionaire_barber/core/routes/app_routes.dart';
+import 'package:millionaire_barber/features/appointments/presentation/pages/appointment_details_screen.dart';
+import 'package:millionaire_barber/features/appointments/presentation/providers/appointment_provider.dart';
 import 'package:millionaire_barber/features/profile/presentation/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -404,6 +407,56 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         },
       ),
     );
+  }
+
+
+
+
+// ✅ دالة جديدة — تجلب الحجز وتفتح التفاصيل
+  Future<void> _openAppointmentDetails(int appointmentId) async {
+    try {
+      // أظهر loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: AppColors.darkRed),
+        ),
+      );
+
+      final appointmentProvider =
+      Provider.of<AppointmentProvider>(context, listen: false);
+
+      final appointment =
+      await appointmentProvider.getAppointmentById(appointmentId);
+
+      if (!mounted) return;
+      Navigator.pop(context); // أغلق loading
+
+      if (appointment != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AppointmentDetailsScreen(appointment: appointment),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('تعذّر فتح تفاصيل الحجز'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.r)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // أغلق loading عند الخطأ
+        debugPrint('❌ خطأ في فتح تفاصيل الحجز: $e');
+      }
+    }
   }
 
   /// ═══════════════════════════════════════════════════════════════
@@ -820,25 +873,43 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
   /// ═══════════════════════════════════════════════════════════════
   /// HANDLE NOTIFICATION TAP
   /// ═══════════════════════════════════════════════════════════════
-
   void _handleNotificationTap(NotificationModel notification) {
-    // TODO: Navigate based on notification type
     switch (notification.type) {
       case NotificationType.bookingConfirmed:
       case NotificationType.reminder:
       case NotificationType.completed:
       case NotificationType.cancelled:
-      // Navigate to appointment details
-      // Navigator.pushNamed(context, AppRoutes.appointmentDetails, arguments: notification.relatedId);
+      // ✅ استبدل relatedId بـ appointmentId
+        if (notification.appointmentId != null) {
+          _openAppointmentDetails(notification.appointmentId!);
+        }
         break;
       case NotificationType.offer:
-      // Navigate to offers screen
-      // Navigator.pushNamed(context, AppRoutes.offers);
+        Navigator.pushNamed(context, AppRoutes.offers);
         break;
       default:
         break;
     }
   }
+
+  // void _handleNotificationTap(NotificationModel notification) {
+  //   // TODO: Navigate based on notification type
+  //   switch (notification.type) {
+  //     case NotificationType.bookingConfirmed:
+  //     case NotificationType.reminder:
+  //     case NotificationType.completed:
+  //     case NotificationType.cancelled:
+  //     // Navigate to appointment details
+  //     // Navigator.pushNamed(context, AppRoutes.appointmentDetails, arguments: notification.relatedId);
+  //       break;
+  //     case NotificationType.offer:
+  //     // Navigate to offers screen
+  //     // Navigator.pushNamed(context, AppRoutes.offers);
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // }
 
   /// ═══════════════════════════════════════════════════════════════
   /// HELPERS
